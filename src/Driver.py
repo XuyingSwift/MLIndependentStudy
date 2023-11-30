@@ -22,7 +22,7 @@ def load_and_prepare_pca_data(file_path):
     X_std = StandardScaler().fit_transform(df)
     return X_std
 
-def get_pca_factors(X_std, num_factors, top_n_variables):
+def get_pca_factors(X_std, num_factors):
     """
     Perform PCA and extract factors.
     """
@@ -31,8 +31,7 @@ def get_pca_factors(X_std, num_factors, top_n_variables):
 
     # Extracting the eigenvectors
     eigenvectors = pca_full.components_
-    factors = [np.argsort(np.abs(component))[-top_n_variables:] for component in eigenvectors[:num_factors]]
-    return factors
+    return eigenvectors 
 
 def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name):
     """
@@ -44,7 +43,7 @@ def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name
         rows = [[fitness] for fitness in global_fitness_list]
         writer.writerows(rows)
 
-def run_fea_process(data_file_path, target_directory, result_file_name, num_factors, top_n_variables, fea_runs, generations, pop_size):
+def run_fea_process(data_file_path, target_directory, result_file_name, num_factors, fea_runs, generations, pop_size):
     """
     Function to setup and run the Factored Evolutionary Algorithm process.
     """
@@ -52,7 +51,7 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     X_std = load_and_prepare_pca_data(data_file_path)
 
     # Perform PCA and extract factors
-    factors =get_pca_factors(X_std, num_factors, top_n_variables)
+    factors =get_pca_factors(X_std, num_factors)
     # Printing the factors in a formatted way
     print("PCA Factors:")
     print(factors)
@@ -91,7 +90,7 @@ def main():
     pop_size = 10
 
     # Call the FEA process function
-    run_fea_process(data_file_path, target_directory, result_file_name, num_factors, top_n_variables, fea_runs, generations, pop_size)
+    run_fea_process(data_file_path, target_directory, result_file_name,  num_factors, fea_runs, generations, pop_size)
 
 if __name__ == "__main__":
     main()
