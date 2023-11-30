@@ -31,7 +31,28 @@ def get_pca_factors(X_std, num_factors):
 
     # Extracting the eigenvectors
     eigenvectors = pca_full.components_
-    return eigenvectors 
+    return eigenvectors
+
+def get_selected_features(eigenvectors):
+    print("Original Eigenvectors:", eigenvectors)
+
+    # Remove the last feature from each eigenvector
+    eigenvectors_without_last_feature = [vector[:-1] for vector in eigenvectors]
+    print("Eigenvectors without last feature:", eigenvectors_without_last_feature)
+
+    # Define a threshold
+    threshold = 0.2  # Adjust as needed
+  # Get indices of features in each eigenvector that are above the threshold
+    indices_of_features_above_threshold = [
+        [index for index, feature in enumerate(vector) if abs(feature) >= threshold] 
+        for vector in eigenvectors_without_last_feature
+    ]
+
+    # Print the indices of features above the threshold for each eigenvector
+    for eigenvector_index, feature_indices in enumerate(indices_of_features_above_threshold):
+        print(f"Eigenvector {eigenvector_index+1}: Indices of features above threshold: {feature_indices}")
+
+
 
 def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name):
     """
@@ -55,6 +76,9 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     # Printing the factors in a formatted way
     print("PCA Factors:")
     print(factors)
+
+    get_selected_features(factors)
+    
 
     # Define the factor architecture
     factor_architecture = FactorArchitecture(dim=10, factors=factors)
@@ -83,7 +107,6 @@ def main():
     target_directory = '/Users/xuyingwangswift/Documents/MLIndependentStudy/src/results'
     result_file_name = 'f1_data.csv'
     num_factors = 10
-    top_n_variables = 10
     # these vairables also need to be turned. 
     fea_runs = 100
     generations = 500
