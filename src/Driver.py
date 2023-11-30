@@ -9,6 +9,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy as np
+import networkx as nx
 import csv
 import os
 
@@ -21,6 +22,25 @@ def load_and_prepare_pca_data(file_path):
     # Standardizing the features
     X_std = StandardScaler().fit_transform(df)
     return X_std
+
+def is_overlapping(eigenvectors, features_above_threshold):
+    # Create a fully connected graph
+    G = nx.Graph()
+
+    # Add nodes for each eigenvector
+    for i in range(len(eigenvectors)):
+        G.add_node(i + 1)
+
+    # Add edges based on shared features above the threshold
+    for i in range(len(features_above_threshold)):
+        for j in range(i + 1, len(features_above_threshold)):
+            if any(feature in features_above_threshold[j] for feature in features_above_threshold[i]):
+                G.add_edge(i + 1, j + 1)
+
+    # Check if the graph is fully connected
+    is_fully_connected = nx.is_connected(G)
+
+    print("The graph is fully connected:", is_fully_connected)
 
 def get_pca_factors(X_std, num_factors):
     """
@@ -52,6 +72,9 @@ def get_selected_features(eigenvectors):
     for eigenvector_index, feature_indices in enumerate(indices_of_features_above_threshold):
         print(f"Eigenvector {eigenvector_index+1}: Indices of features above threshold: {feature_indices}")
 
+    overlapping = is_overlapping(eigenvectors, indices_of_features_above_threshold)
+    if (overlapping):
+        return indices_of_features_above_threshold
 
 
 def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name):
@@ -77,12 +100,11 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     print("PCA Factors:")
     print(factors)
 
-    get_selected_features(factors)
+    selected_factors = get_selected_features(factors)
     
 
     # Define the factor architecture
-    factor_architecture = FactorArchitecture(dim=10, factors=factors)
-    print(factor_architecture.factors)
+    FactorArchitecture(dim=10, factors=selected_factors)
 
     # Define the objective function
     function = Function(function_number=1, lbound=-23, ubound=32)
@@ -98,8 +120,8 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     # )
     # fea.run()
 
-    # Write results to CSV
-    #write_global_fitness_to_csv(fea.global_fitness_list, target_directory, result_file_name)
+    # #Write results to CSV
+    # write_global_fitness_to_csv(fea.global_fitness_list, target_directory, result_file_name)
 
 def main():
     # Define file paths and parameters
@@ -108,7 +130,7 @@ def main():
     result_file_name = 'f1_data.csv'
     num_factors = 10
     # these vairables also need to be turned. 
-    fea_runs = 100
+    fea_runs = 2
     generations = 500
     pop_size = 10
 
