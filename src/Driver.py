@@ -112,6 +112,7 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     print(factor_architecture)
     # Define the objective function
     function = Function(function_number=1, lbound=-23, ubound=32)
+    print(function)
 
     # # Instantiate and run the FEA
     # fea = FEA(
