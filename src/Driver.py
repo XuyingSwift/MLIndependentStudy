@@ -41,6 +41,7 @@ def is_overlapping(eigenvectors, features_above_threshold):
     is_fully_connected = nx.is_connected(G)
 
     print("The graph is fully connected:", is_fully_connected)
+    return is_fully_connected
 
 def get_pca_factors(X_std, num_factors):
     """
@@ -73,8 +74,10 @@ def get_selected_features(eigenvectors):
         print(f"Eigenvector {eigenvector_index+1}: Indices of features above threshold: {feature_indices}")
 
     overlapping = is_overlapping(eigenvectors, indices_of_features_above_threshold)
-    if (overlapping):
+    if overlapping:
         return indices_of_features_above_threshold
+    else:
+        return None
 
 
 def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name):
@@ -101,11 +104,12 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
     print(factors)
 
     selected_factors = get_selected_features(factors)
-    
+    print(selected_factors)
 
     # Define the factor architecture
-    FactorArchitecture(dim=10, factors=selected_factors)
-
+    factor_architecture = FactorArchitecture(dim=10, factors=selected_factors)
+    
+    print(factor_architecture)
     # Define the objective function
     function = Function(function_number=1, lbound=-23, ubound=32)
 
