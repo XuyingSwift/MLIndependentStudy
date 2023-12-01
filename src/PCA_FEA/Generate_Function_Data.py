@@ -14,7 +14,7 @@ from benchmark_functions import sphere
 from benchmark_functions import rosenbrock
 
 
-def generate(dimensions, num_samples, dir_path):
+def generate_function_data(dimensions, num_samples, dir_path):
     # Define a list of benchmark functions and their corresponding input domains
     benchmark_functions = [
         (ackley,           (-32, 32)),

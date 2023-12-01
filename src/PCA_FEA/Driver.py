@@ -136,11 +136,11 @@ def main():
     result_file_name = 'ackley_data_dim_10_gen_10000_result.csv'
     num_factors = 10
     fea_runs = 100
-    generations = 10000
+    generations = 1000
     pop_size = 500
 
     # Call the FEA process function
-    #run_fea_process(data_file_path, target_directory, result_file_name,  num_factors, fea_runs, generations, pop_size)
+    run_fea_process(data_file_path, target_directory, result_file_name,  num_factors, fea_runs, generations, pop_size)
 
 if __name__ == "__main__":
     main()
