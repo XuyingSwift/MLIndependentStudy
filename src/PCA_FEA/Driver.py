@@ -82,16 +82,40 @@ def get_pca_factors(X_std, num_factors):
 
     # Extracting the eigenvectors
     eigenvectors = pca_full.components_
+
+    # # Your existing plotting code
+    # plt.figure(figsize=(12, 6))
+    # sns.heatmap(eigenvectors, cmap='viridis', annot=True)
+    # plt.title('Feature Contributions to Principal Components')
+    # plt.xlabel('Features')
+    # plt.ylabel('Principal Components')
+
+    # # Saving the figure
+    # plt.savefig('/path/to/save/figure.png')  # Specify your desired path and file name
+    # Display the plot
+    plt.show()
     return eigenvectors
 
 def get_selected_features(eigenvectors, threshold, filename, graph_path):
-    print("Original Eigenvectors:", eigenvectors[:1])
-    print("Original Eigenvectors len:", len(eigenvectors))
+    # print("Original Eigenvectors:", eigenvectors[:1])
+    # print("Original Eigenvectors len:", len(eigenvectors))
 
     # Remove the last feature from each eigenvector
     eigenvectors_without_last_feature = [vector[:-1] for vector in eigenvectors]
-    print(len(eigenvectors_without_last_feature))
-    print("Eigenvectors without last feature:", eigenvectors_without_last_feature[:1])
+    # print(len(eigenvectors_without_last_feature))
+    # print("Eigenvectors without last feature:", eigenvectors_without_last_feature[:1])
+
+        # Your existing plotting code
+    plt.figure(figsize=(12, 6))
+    sns.heatmap(eigenvectors_without_last_feature, cmap='viridis', annot=True)
+    plt.title('Feature Contributions to Principal Components')
+    plt.xlabel('Features')
+    plt.ylabel('Principal Components')
+
+    # Saving the figure
+    plt.savefig('/path/to/save/figure.png')  # Specify your desired path and file name
+   
+    plt.show()
 
   # Get indices of features in each eigenvector that are above the threshold
     indices_of_features_above_threshold = [
@@ -203,20 +227,20 @@ def main():
     ]
 
     # Base paths
-    base_data_path = "/Users/xswift/Desktop/MLIndependentStudy/src/genrated_data/dim_30_gen_25000/"
-    base_performance_result_dir = "/Users/xswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/performance_result"
-    base_graph_path = "/Users/xswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/vector_graphs/"
+    base_data_path = "/Users/xuyingwangswift/Desktop/MLIndependentStudy/src/genrated_data/dim_30_gen_25000/"
+    base_performance_result_dir = "/Users/xuyingwangswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/performance_result"
+    base_graph_path = "/Users/xuyingwangswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/vector_graphs/"
 
     # Common parameters
     num_factors = 30
     fea_runs = 50
     generations = 100
     pop_size = 100
-    threshold = 0.27
-    function_name = 'ackley'
-    fcn_num = 1
-    lb = -32
-    ub = 32
+    threshold = 0.25
+    function_name = 'dixon_price'
+    fcn_num = 2
+    lb = -10
+    ub = 10
     # Define file paths
     data_file_path = base_data_path + function_name + ".csv"
     performance_result_file = function_name + '_data_dim_10_gen_10000_result.csv'
