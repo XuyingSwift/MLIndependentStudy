@@ -13,18 +13,47 @@ import networkx as nx
 import csv
 import os
 from Generate_Function_Data import generate_function_data
-
+from sklearn.impute import SimpleImputer
 
 def load_and_prepare_pca_data(file_path):
     """
     Load and preprocess data.
     """
     df = pd.read_csv(file_path)
-    # Standardizing the features
-    X_std = StandardScaler().fit_transform(df)
+
+    # Scale the data
+    scaler = StandardScaler()
+    X_std = scaler.fit_transform(df)
     return X_std
 
-def is_overlapping(eigenvectors, features_above_threshold):
+def plot_graph(G, filename, graph_path):
+    """
+    Plots the graph G, saves it to a specified path, and displays the plot.
+
+    Parameters:
+    G (networkx.Graph): The graph to be plotted.
+    filename (str): The name for the saved plot file.
+    """
+    # Set the size of the plot
+    plt.figure(figsize=(8, 6))
+    
+    # Draw the graph
+    nx.draw(G, with_labels=True, node_color='lightblue', node_size=500, 
+            font_size=10, font_weight='bold')
+    
+    # Set the title of the plot
+    plt.title(filename + " Eigenvector Overlap Graph")
+
+    # Define the path where the graph will be saved
+    save_path = os.path.join(graph_path + filename + ".png")
+
+    # Save the plot to the specified path
+    plt.savefig(save_path)
+    
+    # Display the plot
+    plt.show()
+    
+def is_overlapping(eigenvectors, features_above_threshold, filename, graph_path):
     # Create a fully connected graph
     G = nx.Graph()
 
@@ -40,7 +69,7 @@ def is_overlapping(eigenvectors, features_above_threshold):
 
     # Check if the graph is fully connected
     is_fully_connected = nx.is_connected(G)
-
+    plot_graph(G, filename, graph_path)
     print("The graph is fully connected:", is_fully_connected)
     return is_fully_connected
 
@@ -55,15 +84,15 @@ def get_pca_factors(X_std, num_factors):
     eigenvectors = pca_full.components_
     return eigenvectors
 
-def get_selected_features(eigenvectors):
-    print("Original Eigenvectors:", eigenvectors)
+def get_selected_features(eigenvectors, threshold, filename, graph_path):
+    print("Original Eigenvectors:", eigenvectors[:1])
+    print("Original Eigenvectors len:", len(eigenvectors))
 
     # Remove the last feature from each eigenvector
     eigenvectors_without_last_feature = [vector[:-1] for vector in eigenvectors]
-    print("Eigenvectors without last feature:", eigenvectors_without_last_feature)
+    print(len(eigenvectors_without_last_feature))
+    print("Eigenvectors without last feature:", eigenvectors_without_last_feature[:1])
 
-    # Define a threshold
-    threshold = 0.2  # Adjust as needed
   # Get indices of features in each eigenvector that are above the threshold
     indices_of_features_above_threshold = [
         [index for index, feature in enumerate(vector) if abs(feature) >= threshold] 
@@ -74,12 +103,23 @@ def get_selected_features(eigenvectors):
     for eigenvector_index, feature_indices in enumerate(indices_of_features_above_threshold):
         print(f"Eigenvector {eigenvector_index+1}: Indices of features above threshold: {feature_indices}")
 
-    overlapping = is_overlapping(eigenvectors, indices_of_features_above_threshold)
+    overlapping = is_overlapping(eigenvectors, indices_of_features_above_threshold, filename, graph_path)
     if overlapping:
         return indices_of_features_above_threshold
     else:
         return None
-
+    
+def remove_duplicate_sublists(list_of_lists):
+    seen = set()
+    unique_lists = []
+    for sublist in list_of_lists:
+        # Convert sublist to tuple for hashability
+        tuple_sublist = tuple(sublist)
+        # Add to unique_lists only if not seen before
+        if tuple_sublist not in seen:
+            seen.add(tuple_sublist)
+            unique_lists.append(sublist)
+    return unique_lists
 
 def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name):
     """
@@ -90,31 +130,51 @@ def write_global_fitness_to_csv(global_fitness_list, target_directory, file_name
         writer = csv.writer(file)
         rows = [[fitness] for fitness in global_fitness_list]
         writer.writerows(rows)
-
-def run_fea_process(data_file_path, target_directory, result_file_name, num_factors, fea_runs, generations, pop_size):
-    """
-    Function to setup and run the Factored Evolutionary Algorithm process.
-    """
-    # Load and preprocess data
+        
+def get_fea_factor_architecture(data_file_path, num_factors, threshold, function_name, graph_path):
+       # Load and preprocess data
     X_std = load_and_prepare_pca_data(data_file_path)
 
     # Perform PCA and extract factors
     factors =get_pca_factors(X_std, num_factors)
     # Printing the factors in a formatted way
-    print("PCA Factors:")
-    print(factors)
+    #print("PCA Factors:")
+    #print(factors)
 
-    selected_factors = get_selected_features(factors)
-    print(selected_factors)
+    selected_factors = get_selected_features(factors, threshold, function_name, graph_path)
+    #print(selected_factors)
+    
+    no_duplicates_factors = remove_duplicate_sublists(selected_factors)
+    #print(no_duplicates_factors)
 
     # Define the factor architecture
-    factor_architecture = FactorArchitecture(dim=10, factors=selected_factors)
+    factor_architecture = FactorArchitecture(dim=num_factors, factors= no_duplicates_factors )
     
-    print(factor_architecture)
-    # Define the objective function
-    function = Function(function_number=1, lbound=-23, ubound=32)
-    print(function)
+    #print(factor_architecture)
+    return factor_architecture
 
+def get_function(fcn_num, lb, ub, fcn_name):
+        # Define the objective function
+    function = Function(function_number=fcn_num, lbound=lb, ubound=ub)
+    print(function)
+    return function
+
+def run_fea_process(data_file_path,num_factors, 
+                    fea_runs, generations, 
+                    pop_size, function_name, 
+                    fcn_num, lb, ub,
+                    performance_result_dir,
+                    performance_result_file,
+                    graph_path,
+                    threshold):
+    """
+    Function to setup and run the Factored Evolutionary Algorithm process.
+    """    
+    # Define the factor architecture
+    factor_architecture = get_fea_factor_architecture(data_file_path, num_factors, threshold, function_name, graph_path)
+    
+    function = get_function(fcn_num, lb, ub, function_name)
+    
     # # Instantiate and run the FEA
     fea = FEA(
         function=function,
@@ -124,23 +184,60 @@ def run_fea_process(data_file_path, target_directory, result_file_name, num_fact
         factor_architecture=factor_architecture,
         base_algorithm=PSO
     )
-    fea.run()
+    fea.run(performance_result_dir, performance_result_file)
 
-    #Write results to CSV
-    write_global_fitness_to_csv(fea.global_fitness_list, target_directory, result_file_name)
 
 def main():
-    # Define file paths and parameters
-    data_file_path = "/Users/xuyingwangswift/Documents/MLIndependentStudy/src/genrated_data/dim_10_gen_10000/ackley.csv"
-    target_directory = '/Users/xuyingwangswift/Documents/MLIndependentStudy/src/pca_result'
-    result_file_name = 'ackley_data_dim_10_gen_10000_result.csv'
-    num_factors = 10
-    fea_runs = 100
-    generations = 1000
-    pop_size = 500
+    # List of benchmark functions and their domain ranges
+    benchmark_functions = [
+        ('ackley', (-32, 32)),
+        ('dixon_price', (-10, 10)),
+        ('exponential', (-1, 1)),
+        ('griewank', (-100, 100)),
+        ('powell_singular', (-4, 5)),
+        ('rana', (-500, 500)),
+        ('rastrigin', (-5.12, 5.12)),
+        ('rosenbrock', (-2.048, 2.048)),
+        ('schwefel', (-512, 512)),
+        ('sphere', (-5.12, 5.12))
+    ]
 
-    # Call the FEA process function
-    run_fea_process(data_file_path, target_directory, result_file_name,  num_factors, fea_runs, generations, pop_size)
+    # Base paths
+    base_data_path = "/Users/xswift/Desktop/MLIndependentStudy/src/genrated_data/dim_30_gen_25000/"
+    base_performance_result_dir = "/Users/xswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/performance_result"
+    base_graph_path = "/Users/xswift/Desktop/MLIndependentStudy/src/PCA_FEA/results/dim30_gen25000/vector_graphs/"
+
+    # Common parameters
+    num_factors = 30
+    fea_runs = 50
+    generations = 100
+    pop_size = 100
+    threshold = 0.27
+    function_name = 'ackley'
+    fcn_num = 1
+    lb = -32
+    ub = 32
+    # Define file paths
+    data_file_path = base_data_path + function_name + ".csv"
+    performance_result_file = function_name + '_data_dim_10_gen_10000_result.csv'
+    
+    # ANSI escape codes for color (e.g., green)
+    GREEN = "\033[92m"
+    RESET = "\033[0m"
+
+    # Your print statement with color
+    print(f"{GREEN}Running FEA process for {function_name} (Function #{fcn_num}){RESET}")
+        # Call the FEA process function
+    run_fea_process(data_file_path, num_factors, 
+                    fea_runs, generations, 
+                    pop_size, function_name, 
+                    fcn_num, lb, ub,
+                    base_performance_result_dir,
+                    performance_result_file,
+                    base_graph_path,
+                    threshold)
+
+   
 
 if __name__ == "__main__":
     main()

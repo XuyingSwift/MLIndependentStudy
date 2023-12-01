@@ -82,8 +82,8 @@ class PSO(object):
 
         # Sort the population by fitness and print information.
         self.pop.sort(key=attrgetter('fitness'))
-        print(YELLOW + f"Worst Fitness: {self.pop[-1].fitness}, Best Fitness: {self.pop[0].fitness}" + ENDC)
-        print(self.pop[-1], self.pop[0])
+        # print(YELLOW + f"Worst Fitness: {self.pop[-1].fitness}, Best Fitness: {self.pop[0].fitness}" + ENDC)
+        # print(self.pop[-1], self.pop[0])
 
         # Create a partial solution based on the specified factor.
         partial_solution = [x for i, x in enumerate(global_solution) if i in self.factor]

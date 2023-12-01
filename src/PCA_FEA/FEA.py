@@ -1,4 +1,6 @@
 import numpy as np
+import csv
+import os
 
 Magenta = "\033[35m"
 Cyan = "\033[36m"
@@ -45,7 +47,7 @@ class FEA:
         self.subpopulations = self.initialize_factored_subpopulations()
         self.global_fitness_list = []
 
-    def run(self):
+    def run(self, result_dir, filename):
         """
         Executes the FEA process for a specified number of runs.
 
@@ -61,25 +63,39 @@ class FEA:
         subpopulations for their next run, ensuring that the entire population moves 
         towards better solutions over time.
         """
-        for fea_run in range(self.fea_runs):
+        
+        # Ensure the directory exists
+        os.makedirs(result_dir, exist_ok=True)
 
-            print(GREEN + f"Starting FEA run {fea_run+1} of {self.fea_runs}" + ENDC)
-            # Iterate through each subpopulation and run their respective optimization algorithm
-            for alg in self.subpopulations:
-                alg.run()  # Run the base algorithm for the current subpopulation
+        # Construct the full path for the file
+        file_path = os.path.join(result_dir, filename)
+        
+        with open(file_path, 'w', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow(['FEA Run', 'Global Fitness'])  # Writing the header
+            
+            for fea_run in range(self.fea_runs):
 
-            print(Magenta + f"Competing subpopulations for FEA run {fea_run+1}" + ENDC)
-            # Compete step: optimizes each variable across all subpopulations
-            self.compete()
+                print(GREEN + f"Starting FEA run {fea_run+1} of {self.fea_runs}" + ENDC)
+                # Iterate through each subpopulation and run their respective optimization algorithm
+                for alg in self.subpopulations:
+                    alg.run()  # Run the base algorithm for the current subpopulation
 
-            print(BLUE + f"Sharing solution among subpopulations for FEA run {fea_run+1}" + ENDC)
-            # Share step: updates each subpopulation with the latest global solution
-            self.share_solution()
+                print(Magenta + f"Competing subpopulations for FEA run {fea_run+1}" + ENDC)
+                # Compete step: optimizes each variable across all subpopulations
+                self.compete()
 
-            # Print the current FEA run number and the global fitness value
-            print(GREEN + f'FEA run {fea_run+1} completed. Global Fitness: {self.global_fitness}')
+                print(BLUE + f"Sharing solution among subpopulations for FEA run {fea_run+1}" + ENDC)
+                # Share step: updates each subpopulation with the latest global solution
+                self.share_solution()
 
-            self.global_fitness_list.append(self.global_fitness)
+                # Print the current FEA run number and the global fitness value
+                print(GREEN + f'FEA run {fea_run+1} completed. Global Fitness: {self.global_fitness}')
+                
+                # Writing the FEA run number and the global fitness value to the CSV file
+                writer.writerow([fea_run + 1, self.global_fitness])
+
+                self.global_fitness_list.append(self.global_fitness)
 
 
     def set_global_solution(self, continuous):
